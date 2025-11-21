@@ -1,0 +1,52 @@
+[
+  {
+    "id": "evt_001",
+    "name": "Tivoli Gardens Summer Season",
+    "description": "Open air concerts and evening illumination",
+    "lat": 55.6737,
+    "lon": 12.5681,
+    "type": "concert",
+    "impact_radius": 800,
+    "traffic_boost": 30
+  },
+  {
+    "id": "evt_002",
+    "name": "Reffen Street Food Market",
+    "description": "Busy street food area with live DJ",
+    "lat": 55.6938,
+    "lon": 12.6082,
+    "type": "food",
+    "impact_radius": 500,
+    "traffic_boost": 25
+  },
+  {
+    "id": "evt_003",
+    "name": "Royal Arena Concert",
+    "description": "Large international music event",
+    "lat": 55.6253,
+    "lon": 12.5736,
+    "type": "concert",
+    "impact_radius": 1000,
+    "traffic_boost": 40
+  },
+  {
+    "id": "evt_004",
+    "name": "Torvehallerne Weekend Market",
+    "description": "Farmers market and outdoor stalls",
+    "lat": 55.6828,
+    "lon": 12.5719,
+    "type": "market",
+    "impact_radius": 300,
+    "traffic_boost": 20
+  },
+  {
+    "id": "evt_005",
+    "name": "Nyhavn Jazz Festival",
+    "description": "Outdoor jazz performances along the canal",
+    "lat": 55.6798,
+    "lon": 12.5914,
+    "type": "festival",
+    "impact_radius": 400,
+    "traffic_boost": 35
+  }
+]
