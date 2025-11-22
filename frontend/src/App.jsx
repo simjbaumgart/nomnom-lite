@@ -23,7 +23,7 @@ function App() {
   const [loadingScored, setLoadingScored] = useState(false);
   const [error, setError] = useState(null);
   const [showControls, setShowControls] = useState(false);
-  const [showTop15, setShowTop15] = useState(true);
+  const [showTop15, setShowTop15] = useState(false);
   const [showPermitInfo, setShowPermitInfo] = useState(false);
   const [permitInfo, setPermitInfo] = useState(null);
   const [permitFilter, setPermitFilter] = useState('all'); // 'all', 'green', 'yellow', 'red' 
