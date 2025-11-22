@@ -92,7 +92,10 @@ COPENHAGEN_HOTSPOTS = [
 ]
 
 @app.get("/")
-def read_root():
+async def read_root():
+    # Serve index.html if it exists (Production)
+    if os.path.exists(f"{static_dir}/index.html"):
+        return FileResponse(f"{static_dir}/index.html")
     return {"message": "NomNom Lite API", "status": "running"}
 
 @app.get("/api/weather")
