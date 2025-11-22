@@ -20,6 +20,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve Static Files (Frontend)
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+# Mount static files if directory exists (it will after build)
+static_dir = "static"
+if os.path.exists(static_dir):
+    app.mount("/assets", StaticFiles(directory=f"{static_dir}/assets"), name="assets")
+
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """Serve the React frontend for any unmatched route"""
+    # Allow API routes to pass through (handled by FastAPI priority)
+    if full_path.startswith("api/"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
+    # Check if a specific file exists in static (e.g. favicon.ico, manifest.json)
+    file_path = f"{static_dir}/{full_path}"
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+        
+    # Otherwise serve index.html for SPA routing
+    if os.path.exists(f"{static_dir}/index.html"):
+        return FileResponse(f"{static_dir}/index.html")
+    
+    return {"message": "Frontend not built. Run build.sh to generate static files."}
+
 # Expanded hotspots - 30+ areas across Copenhagen
 COPENHAGEN_HOTSPOTS = [
     # Tourist Areas
