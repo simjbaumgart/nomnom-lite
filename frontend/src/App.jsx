@@ -31,6 +31,7 @@ function App() {
   const [showHotspots, setShowHotspots] = useState(true);
   const [events, setEvents] = useState([]);
   const [showEvents, setShowEvents] = useState(true);
+  const [showUpcomingEvents, setShowUpcomingEvents] = useState(false);
 
   // Filter states
   const [minTraffic, setMinTraffic] = useState(0);
@@ -298,6 +299,13 @@ function App() {
                 onClick={() => setShowPermitInfo(true)}
               >
                 ℹ️ View Permit Regulations
+              </button>
+              <button
+                className="info-btn"
+                style={{ marginLeft: '10px' }}
+                onClick={() => setShowUpcomingEvents(true)}
+              >
+                📅 Upcoming Events
               </button>
             </div>
             <div className="control-row">
@@ -582,6 +590,55 @@ function App() {
             <div className="modal-footer">
               <p className="disclaimer"><small>{permitInfo.disclaimer}</small></p>
               <p><a href={permitInfo.application_url} target="_blank" rel="noopener noreferrer">Source: City of Copenhagen</a></p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUpcomingEvents && (
+        <div className="modal-overlay" onClick={() => setShowUpcomingEvents(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📅 Upcoming Events (Tomorrow)</h2>
+              <button className="close-btn" onClick={() => setShowUpcomingEvents(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="events-list">
+                {events.filter(e => {
+                  const eventDate = new Date(e.date);
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  return eventDate.toDateString() === tomorrow.toDateString();
+                }).length === 0 ? (
+                  <p>No events found for tomorrow.</p>
+                ) : (
+                  events.filter(e => {
+                    const eventDate = new Date(e.date);
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    return eventDate.toDateString() === tomorrow.toDateString();
+                  }).map((event, i) => (
+                    <div key={i} className="event-card">
+                      <div className="event-header">
+                        <h3>{event.name}</h3>
+                        <span className="event-time">{event.time}</span>
+                      </div>
+                      <p>{event.description}</p>
+                      <div className="event-details">
+                        <span className="event-type">{event.type.toUpperCase()}</span>
+                        <span>📍 Impact: {event.impact_radius}m</span>
+                        <span>📈 Traffic: +{event.traffic_boost}%</span>
+                      </div>
+                      <button className="view-map-btn" onClick={() => {
+                        flyToSpot(event.lat, event.lon);
+                        setShowUpcomingEvents(false);
+                      }}>
+                        View on Map
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -7,7 +7,9 @@
     "lon": 12.5681,
     "type": "concert",
     "impact_radius": 800,
-    "traffic_boost": 30
+    "traffic_boost": 30,
+    "date": "2025-11-22",
+    "time": "18:00"
   },
   {
     "id": "evt_002",
@@ -17,7 +19,9 @@
     "lon": 12.6082,
     "type": "food",
     "impact_radius": 500,
-    "traffic_boost": 25
+    "traffic_boost": 25,
+    "date": "2025-11-22",
+    "time": "12:00"
   },
   {
     "id": "evt_003",
@@ -27,7 +31,9 @@
     "lon": 12.5736,
     "type": "concert",
     "impact_radius": 1000,
-    "traffic_boost": 40
+    "traffic_boost": 40,
+    "date": "2025-11-23",
+    "time": "20:00"
   },
   {
     "id": "evt_004",
@@ -37,7 +43,9 @@
     "lon": 12.5719,
     "type": "market",
     "impact_radius": 300,
-    "traffic_boost": 20
+    "traffic_boost": 20,
+    "date": "2025-11-22",
+    "time": "10:00"
   },
   {
     "id": "evt_005",
@@ -47,6 +55,8 @@
     "lon": 12.5914,
     "type": "festival",
     "impact_radius": 400,
-    "traffic_boost": 35
+    "traffic_boost": 35,
+    "date": "2025-11-23",
+    "time": "15:00"
   }
 ]

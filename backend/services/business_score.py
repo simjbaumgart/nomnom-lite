@@ -52,8 +52,9 @@ def calculate_business_score(
     traffic_score = traffic_level * 0.5
     
     # Competition component (30% weight)
-    # 500m or more = 100 points, 0m = 0 points
-    competition_score = min(100, (nearest_cafe_distance / 5)) * 0.3
+    # Clustering Strategy: Closer to competitors is BETTER.
+    # 0m distance = 100 points, 500m or more = 0 points
+    competition_score = max(0, 100 - (nearest_cafe_distance / 5)) * 0.3
     
     # Weather component (20% weight)
     weather_score = 100 * 0.2 if weather_suitable else 0

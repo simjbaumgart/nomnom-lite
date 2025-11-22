@@ -56,6 +56,9 @@ class EventService:
         # In a real app, this would use Google Search API or scraping
         # For MVP, we return realistic data for Copenhagen
         
+        today = datetime.date.today()
+        tomorrow = today + datetime.timedelta(days=1)
+        
         return [
             {
                 "id": "evt_001",
@@ -64,8 +67,10 @@ class EventService:
                 "lat": 55.6737,
                 "lon": 12.5681,
                 "type": "concert",
-                "impact_radius": 800,  # meters
-                "traffic_boost": 30    # % boost
+                "impact_radius": 800,
+                "traffic_boost": 30,
+                "date": today.isoformat(),
+                "time": "18:00"
             },
             {
                 "id": "evt_002",
@@ -75,7 +80,9 @@ class EventService:
                 "lon": 12.6082,
                 "type": "food",
                 "impact_radius": 500,
-                "traffic_boost": 25
+                "traffic_boost": 25,
+                "date": today.isoformat(),
+                "time": "12:00"
             },
             {
                 "id": "evt_003",
@@ -85,7 +92,9 @@ class EventService:
                 "lon": 12.5736,
                 "type": "concert",
                 "impact_radius": 1000,
-                "traffic_boost": 40
+                "traffic_boost": 40,
+                "date": tomorrow.isoformat(),
+                "time": "20:00"
             },
             {
                 "id": "evt_004",
@@ -95,7 +104,9 @@ class EventService:
                 "lon": 12.5719,
                 "type": "market",
                 "impact_radius": 300,
-                "traffic_boost": 20
+                "traffic_boost": 20,
+                "date": today.isoformat(),
+                "time": "10:00"
             },
             {
                 "id": "evt_005",
@@ -105,7 +116,9 @@ class EventService:
                 "lon": 12.5914,
                 "type": "festival",
                 "impact_radius": 400,
-                "traffic_boost": 35
+                "traffic_boost": 35,
+                "date": tomorrow.isoformat(),
+                "time": "15:00"
             }
         ]
 
