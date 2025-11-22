@@ -32,9 +32,31 @@ def find_nearest_cafe(hotspot_lat: float, hotspot_lon: float, cafes: List[Dict])
     
     return min_distance if min_distance != float('inf') else 500  # Default 500m if no cafes
 
+def calculate_cafe_density(hotspot_lat: float, hotspot_lon: float, cafes: List[Dict], radius_meters: int = 400) -> int:
+    """
+    Calculate number of cafes within a specific radius.
+    """
+    count = 0
+    for cafe in cafes:
+        if cafe.get('error'):
+            continue
+        distance = calculate_distance(hotspot_lat, hotspot_lon, cafe['lat'], cafe['lon'])
+        if distance <= radius_meters:
+            count += 1
+    return count
+
+def get_density_label(count: int) -> Dict:
+    """Return label and color for density count"""
+    if count >= 5:
+        return {"label": "High", "color": "#22c55e", "score_boost": 20}
+    elif count >= 2:
+        return {"label": "Medium", "color": "#eab308", "score_boost": 10}
+    else:
+        return {"label": "Low", "color": "#94a3b8", "score_boost": 0}
+
 def calculate_business_score(
     traffic_level: int,
-    nearest_cafe_distance: float,
+    cafe_density_count: int,
     weather_suitable: bool
 ) -> Dict:
     """
@@ -42,7 +64,7 @@ def calculate_business_score(
     
     Args:
         traffic_level: 0-100, from Popular Times or estimation
-        nearest_cafe_distance: meters to nearest competitor
+        cafe_density_count: number of cafes within 400m
         weather_suitable: boolean from weather service
     
     Returns:
@@ -51,10 +73,10 @@ def calculate_business_score(
     # Traffic component (50% weight)
     traffic_score = traffic_level * 0.5
     
-    # Competition component (30% weight)
-    # Clustering Strategy: Closer to competitors is BETTER.
-    # 0m distance = 100 points, 500m or more = 0 points
-    competition_score = max(0, 100 - (nearest_cafe_distance / 5)) * 0.3
+    # Competition/Density component (30% weight)
+    # Clustering Strategy: More cafes = Better hotspot
+    density_info = get_density_label(cafe_density_count)
+    competition_score = density_info["score_boost"] * 1.5 # Scale to max 30 points (20 * 1.5 = 30)
     
     # Weather component (20% weight)
     weather_score = 100 * 0.2 if weather_suitable else 0

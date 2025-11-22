@@ -137,7 +137,7 @@ function App() {
   // Custom icon for events
   const eventIcon = new L.divIcon({
     className: 'custom-marker event-marker',
-    html: '🎪',
+    html: '🎟️',
     iconSize: [35, 35],
   });
 
@@ -193,6 +193,12 @@ function App() {
             onClick={() => setShowTop15(!showTop15)}
           >
             {showTop15 ? '✕ Hide Top 15' : '🏆 Show Top 15'}
+          </button>
+          <button
+            className="events-toggle-btn"
+            onClick={() => setShowEvents(!showEvents)}
+          >
+            {showEvents ? '✕ Hide Events' : '🎪 Show Events'}
           </button>
         </div>
       </header>
@@ -328,16 +334,7 @@ function App() {
                 <span>Show Individual Hotspots</span>
               </label>
             </div>
-            <div className="control-row">
-              <label className="toggle-label">
-                <input
-                  type="checkbox"
-                  checked={showEvents}
-                  onChange={(e) => setShowEvents(e.target.checked)}
-                />
-                <span>Show Events (Daily Scrape)</span>
-              </label>
-            </div>
+
             <button
               className="apply-filters-btn"
               onClick={applyFilters}
@@ -391,7 +388,7 @@ function App() {
                     ★ {spot.business_score}/100
                   </div>
                   <div className="top15-details">
-                    👥 {spot.traffic_level}% • ☕ {spot.nearest_cafe_distance}m
+                    👥 {spot.traffic_level}% • <span style={{ color: spot.density_color }}>☕ {spot.density_label} Density ({spot.cafe_density})</span>
                   </div>
                 </div>
               </div>
@@ -482,7 +479,9 @@ function App() {
                           {spot.event_boost > 0 && <span className="boost-tag">↑ Boosted</span>}
                           {spot.traffic_level < 30 && !spot.event_boost && <span className="quiet-tag"> 🌙 Quiet</span>}
                         </div>
-                        <div>☕ Competition: {spot.nearest_cafe_distance}m away</div>
+                        <div>
+                          ☕ Density: <span style={{ color: spot.density_color, fontWeight: 'bold' }}>{spot.density_label}</span> ({spot.cafe_density} cafes nearby)
+                        </div>
                         <div>🌤️ Weather: {spot.weather_suitable ? 'Suitable' : 'Unsuitable'}</div>
                         <div className="permit-status-row">
                           <span>📜 Permit: </span>

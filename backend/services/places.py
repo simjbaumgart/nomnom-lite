@@ -37,12 +37,12 @@ def get_cafes() -> List[Dict]:
     overpass_url = "https://overpass-api.de/api/interpreter"
     
     # Expanded Overpass QL query
-    # Includes cafes, bakeries, ice cream shops, and restaurants/bars/fast_food
+    # Strictly coffee-centric: Cafes and Bakeries only.
     query = f"""
     [out:json][timeout:25];
     (
-      node["amenity"~"cafe|bar|restaurant|fast_food|ice_cream"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
-      way["amenity"~"cafe|bar|restaurant|fast_food|ice_cream"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
+      node["amenity"="cafe"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
+      way["amenity"="cafe"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
       node["shop"="bakery"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
       way["shop"="bakery"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
     );

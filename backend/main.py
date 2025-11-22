@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from services.weather import get_weather
 from services.places import get_cafes
 from services.popular_times import get_popular_times
-from services.business_score import calculate_business_score, find_nearest_cafe
+from services.business_score import calculate_business_score, find_nearest_cafe, calculate_cafe_density, get_density_label
 from services.activity_zones import calculate_zone_scores
 from services.permit_info import get_permit_status, PERMIT_REGULATIONS
 from services.events import get_active_events
@@ -211,25 +211,27 @@ def hotspots_scored(
         if traffic_level < min_traffic:
             continue
         
-        # Calculate distance to nearest cafe
+        # Calculate distance to nearest cafe (keep for info)
         nearest_cafe_dist = find_nearest_cafe(spot["lat"], spot["lon"], cafes_data)
         
-        # Filter by competition distance
-        # Don't filter by competition for zone aggregation
-        # if nearest_cafe_dist > max_competition_distance:
-        #     continue
+        # Calculate Cafe Density
+        cafe_density = calculate_cafe_density(spot["lat"], spot["lon"], cafes_data)
+        density_info = get_density_label(cafe_density)
         
         # Filter by weather suitability
         if require_suitable_weather and not weather_suitable:
             continue
         
-        # Calculate business score
-        score_data = calculate_business_score(traffic_level, nearest_cafe_dist, weather_suitable)
+        # Calculate business score using Density
+        score_data = calculate_business_score(traffic_level, cafe_density, weather_suitable)
         
         # Build result
         spot_result = spot.copy()
         spot_result["traffic_level"] = traffic_level
         spot_result["nearest_cafe_distance"] = round(nearest_cafe_dist, 1)
+        spot_result["cafe_density"] = cafe_density
+        spot_result["density_label"] = density_info["label"]
+        spot_result["density_color"] = density_info["color"]
         spot_result["weather_suitable"] = weather_suitable
         spot_result["data_available"] = data_available
         spot_result.update(score_data)
@@ -361,16 +363,14 @@ def activity_zones(
             continue
         
         nearest_cafe_dist = find_nearest_cafe(spot["lat"], spot["lon"], cafes_data)
+        cafe_density = calculate_cafe_density(spot["lat"], spot["lon"], cafes_data)
         
-        # Don't filter by competition for zone aggregation
-        # if nearest_cafe_dist > max_competition_distance:
-        #     continue
-        
-        score_data = calculate_business_score(traffic_level, nearest_cafe_dist, weather_suitable)
+        score_data = calculate_business_score(traffic_level, cafe_density, weather_suitable)
         
         spot_result = spot.copy()
         spot_result["traffic_level"] = traffic_level
         spot_result["nearest_cafe_distance"] = round(nearest_cafe_dist, 1)
+        spot_result["cafe_density"] = cafe_density
         spot_result["weather_suitable"] = weather_suitable
         spot_result.update(score_data)
         
