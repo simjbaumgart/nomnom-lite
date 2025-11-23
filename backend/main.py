@@ -1,15 +1,15 @@
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from services.weather import get_weather
-from services.places import get_cafes
-from services.popular_times import get_popular_times
-from services.business_score import calculate_business_score, find_nearest_cafe, calculate_cafe_density, get_density_label
-from services.activity_zones import calculate_zone_scores
-from services.permit_info import get_permit_status, PERMIT_REGULATIONS
-from services.events import get_active_events
+from backend.services.weather import get_weather
+from backend.services.places import get_cafes
+from backend.services.popular_times import get_popular_times
+from backend.services.business_score import calculate_business_score, find_nearest_cafe, calculate_cafe_density, get_density_label
+from backend.services.activity_zones import calculate_zone_scores
+from backend.services.permit_info import get_permit_status, PERMIT_REGULATIONS
+from backend.services.events import get_active_events
 from typing import Optional
-from config import CITIES, DEFAULT_CITY_ID
-from hotspots import get_hotspots
+from backend.config import CITIES, DEFAULT_CITY_ID
+from backend.hotspots import get_hotspots
 
 app = FastAPI(title="NomNom Lite API")
 
