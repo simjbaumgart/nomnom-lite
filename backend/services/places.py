@@ -1,35 +1,33 @@
 import requests
 from typing import List, Dict
-
-# Copenhagen bounding box (approximate)
 import json
 import os
 import time
+from ..config import CITIES, DEFAULT_CITY_ID
 
-# Copenhagen bounding box (expanded)
-COPENHAGEN_BBOX = {
-    "south": 55.60,
-    "west": 12.42,
-    "north": 55.75,
-    "east": 12.68
-}
-
-CACHE_FILE = "cafes_cache.json"
+CACHE_FILE_PREFIX = "cafes_cache_"
 CACHE_DURATION = 24 * 60 * 60  # 24 hours
 
-def get_cafes() -> List[Dict]:
+def get_cafes(city_id: str = DEFAULT_CITY_ID) -> List[Dict]:
     """
-    Fetch cafe locations in Copenhagen using Overpass API (OSM).
+    Fetch cafe locations for a specific city using Overpass API (OSM).
     Returns a list of cafes with their coordinates and names.
     Uses local caching to avoid hitting API rate limits.
     """
+    if city_id not in CITIES:
+        return [{"error": f"Invalid city_id: {city_id}"}]
+        
+    city_config = CITIES[city_id]
+    bbox = city_config['bbox']
+    cache_file = f"{CACHE_FILE_PREFIX}{city_id}.json"
+
     # Check cache first
-    if os.path.exists(CACHE_FILE):
+    if os.path.exists(cache_file):
         try:
-            with open(CACHE_FILE, "r") as f:
+            with open(cache_file, "r") as f:
                 cache_data = json.load(f)
                 if time.time() - cache_data["timestamp"] < CACHE_DURATION:
-                    print("Using cached cafe data")
+                    print(f"Using cached cafe data for {city_id}")
                     return cache_data["cafes"]
         except Exception as e:
             print(f"Cache read error: {e}")
@@ -41,16 +39,16 @@ def get_cafes() -> List[Dict]:
     query = f"""
     [out:json][timeout:25];
     (
-      node["amenity"="cafe"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
-      way["amenity"="cafe"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
-      node["shop"="bakery"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
-      way["shop"="bakery"]({COPENHAGEN_BBOX['south']},{COPENHAGEN_BBOX['west']},{COPENHAGEN_BBOX['north']},{COPENHAGEN_BBOX['east']});
+      node["amenity"="cafe"]({bbox['south']},{bbox['west']},{bbox['north']},{bbox['east']});
+      way["amenity"="cafe"]({bbox['south']},{bbox['west']},{bbox['north']},{bbox['east']});
+      node["shop"="bakery"]({bbox['south']},{bbox['west']},{bbox['north']},{bbox['east']});
+      way["shop"="bakery"]({bbox['south']},{bbox['west']},{bbox['north']},{bbox['east']});
     );
     out center;
     """
     
     try:
-        print("Fetching fresh cafe data from Overpass API...")
+        print(f"Fetching fresh cafe data for {city_id} from Overpass API...")
         response = requests.post(overpass_url, data={"data": query}, timeout=60)
         response.raise_for_status()
         data = response.json()
@@ -83,7 +81,7 @@ def get_cafes() -> List[Dict]:
         
         # Save to cache
         try:
-            with open(CACHE_FILE, "w") as f:
+            with open(cache_file, "w") as f:
                 json.dump({
                     "timestamp": time.time(),
                     "cafes": cafes
@@ -95,9 +93,9 @@ def get_cafes() -> List[Dict]:
     except Exception as e:
         print(f"Error fetching cafes: {e}")
         # Try to return stale cache if available
-        if os.path.exists(CACHE_FILE):
+        if os.path.exists(cache_file):
             try:
-                with open(CACHE_FILE, "r") as f:
+                with open(cache_file, "r") as f:
                     return json.load(f)["cafes"]
             except:
                 pass

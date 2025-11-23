@@ -24,6 +24,78 @@
     "time": "12:00"
   },
   {
+    "id": "evt_small_01",
+    "name": "Morning Yoga in King's Garden",
+    "description": "Community yoga gathering. Coffee needed after!",
+    "lat": 55.6856,
+    "lon": 12.5787,
+    "type": "gathering",
+    "impact_radius": 200,
+    "traffic_boost": 15,
+    "date": "2025-11-22",
+    "time": "08:00"
+  },
+  {
+    "id": "evt_small_02",
+    "name": "Langelinie Runners Meetup",
+    "description": "Large running group finishing their route.",
+    "lat": 55.6919,
+    "lon": 12.5975,
+    "type": "gathering",
+    "impact_radius": 150,
+    "traffic_boost": 20,
+    "date": "2025-11-22",
+    "time": "09:00"
+  },
+  {
+    "id": "evt_small_05",
+    "name": "Vesterbro Flea Market",
+    "description": "Local vintage market, high foot traffic.",
+    "lat": 55.6682,
+    "lon": 12.551,
+    "type": "market",
+    "impact_radius": 300,
+    "traffic_boost": 25,
+    "date": "2025-11-22",
+    "time": "10:00"
+  },
+  {
+    "id": "evt_small_06",
+    "name": "Islands Brygge Harbor Fair",
+    "description": "Small stalls and music by the water.",
+    "lat": 55.6651,
+    "lon": 12.5771,
+    "type": "market",
+    "impact_radius": 250,
+    "traffic_boost": 20,
+    "date": "2025-11-22",
+    "time": "11:00"
+  },
+  {
+    "id": "evt_small_07",
+    "name": "Outdoor Cinema: Zulu Sommerbio",
+    "description": "Free movie screening in the park.",
+    "lat": 55.6981,
+    "lon": 12.5631,
+    "type": "cinema",
+    "impact_radius": 400,
+    "traffic_boost": 35,
+    "date": "2025-11-22",
+    "time": "19:00"
+  },
+  {
+    "id": "evt_small_08",
+    "name": "Canal Tour Grand Departure",
+    "description": "Large tourist group gathering.",
+    "lat": 55.6798,
+    "lon": 12.5914,
+    "type": "tourist",
+    "impact_radius": 100,
+    "traffic_boost": 25,
+    "date": "2025-11-22",
+    "time": "15:00"
+  },
+  {
     "id": "evt_003",
     "name": "Royal Arena Concert",
     "description": "Large international music event",
@@ -34,29 +106,5 @@
     "traffic_boost": 40,
     "date": "2025-11-23",
     "time": "20:00"
-  },
-  {
-    "id": "evt_004",
-    "name": "Torvehallerne Weekend Market",
-    "description": "Farmers market and outdoor stalls",
-    "lat": 55.6828,
-    "lon": 12.5719,
-    "type": "market",
-    "impact_radius": 300,
-    "traffic_boost": 20,
-    "date": "2025-11-22",
-    "time": "10:00"
-  },
-  {
-    "id": "evt_005",
-    "name": "Nyhavn Jazz Festival",
-    "description": "Outdoor jazz performances along the canal",
-    "lat": 55.6798,
-    "lon": 12.5914,
-    "type": "festival",
-    "impact_radius": 400,
-    "traffic_boost": 35,
-    "date": "2025-11-23",
-    "time": "15:00"
   }
 ]

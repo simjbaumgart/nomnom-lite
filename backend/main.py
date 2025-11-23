@@ -8,6 +8,8 @@ from services.activity_zones import calculate_zone_scores
 from services.permit_info import get_permit_status, PERMIT_REGULATIONS
 from services.events import get_active_events
 from typing import Optional
+from config import CITIES, DEFAULT_CITY_ID
+from hotspots import get_hotspots
 
 app = FastAPI(title="NomNom Lite API")
 
@@ -30,67 +32,6 @@ static_dir = "static"
 if os.path.exists(static_dir):
     app.mount("/assets", StaticFiles(directory=f"{static_dir}/assets"), name="assets")
 
-
-
-# Expanded hotspots - 30+ areas across Copenhagen
-COPENHAGEN_HOTSPOTS = [
-    # Tourist Areas
-    {"name": "Nyhavn", "lat": 55.6798, "lon": 12.5914, "type": "tourist"},
-    {"name": "Strøget", "lat": 55.6788, "lon": 12.5711, "type": "tourist"},
-    {"name": "Tivoli Gardens", "lat": 55.6737, "lon": 12.5681, "type": "tourist"},
-    {"name": "The Little Mermaid", "lat": 55.6929, "lon": 12.5994, "type": "tourist"},
-    {"name": "Amalienborg Palace", "lat": 55.6840, "lon": 12.5930, "type": "tourist"},
-    {"name": "Kongens Nytorv", "lat": 55.6803, "lon": 12.5858, "type": "tourist"},
-    {"name": "Christiansborg Palace", "lat": 55.6761, "lon": 12.5801, "type": "tourist"},
-    {"name": "The Round Tower", "lat": 55.6813, "lon": 12.5755, "type": "tourist"},
-    {"name": "Rosenborg Castle", "lat": 55.6858, "lon": 12.5773, "type": "tourist"},
-    {"name": "Kastellet", "lat": 55.6914, "lon": 12.5940, "type": "tourist"},
-    
-    # Transport Hubs
-    {"name": "Nørreport Station", "lat": 55.6833, "lon": 12.5717, "type": "transport"},
-    {"name": "Copenhagen Central Station", "lat": 55.6726, "lon": 12.5643, "type": "transport"},
-    {"name": "Østerport Station", "lat": 55.6924, "lon": 12.5875, "type": "transport"},
-    {"name": "Forum Station", "lat": 55.6846, "lon": 12.5438, "type": "transport"},
-    {"name": "Christianshavn Metro", "lat": 55.6732, "lon": 12.5916, "type": "transport"},
-    
-    # Shopping & Business
-    {"name": "Fisketorvet Shopping Center", "lat": 55.6661, "lon": 12.5605, "type": "shopping"},
-    {"name": "Magasin du Nord", "lat": 55.6796, "lon": 12.5863, "type": "shopping"},
-    {"name": "Frederiksberg Centret", "lat": 55.6775, "lon": 12.5302, "type": "shopping"},
-    {"name": "Torvehallerne Market", "lat": 55.6828, "lon": 12.5719, "type": "shopping"},
-    
-    # Parks & Recreation
-    {"name": "The King's Garden", "lat": 55.6856, "lon": 12.5787, "type": "park"},
-    {"name": "Frederiksberg Gardens", "lat": 55.6753, "lon": 12.5336, "type": "park"},
-    {"name": "Fælled Park", "lat": 55.6981, "lon": 12.5631, "type": "park"},
-    {"name": "Amager Strandpark", "lat": 55.6550, "lon": 12.6543, "type": "park"},
-    
-    # Neighborhoods
-    {"name": "Nørrebro", "lat": 55.6897, "lon": 12.5531, "type": "neighborhood"},
-    {"name": "Vesterbro", "lat": 55.6682, "lon": 12.5510, "type": "neighborhood"},
-    {"name": "Østerbro", "lat": 55.7042, "lon": 12.5770, "type": "neighborhood"},
-    {"name": "Frederiksberg", "lat": 55.6789, "lon": 12.5342, "type": "neighborhood"},
-    {"name": "Christianshavn", "lat": 55.6732, "lon": 12.5943, "type": "neighborhood"},
-    {"name": "Islands Brygge", "lat": 55.6651, "lon": 12.5771, "type": "neighborhood"},
-    
-    # Universities & Cultural
-    {"name": "University of Copenhagen", "lat": 55.6794, "lon": 12.5726, "type": "cultural"},
-    {"name": "IT University", "lat": 55.6596, "lon": 12.5908, "type": "cultural"},
-    {"name": "National Gallery", "lat": 55.6889, "lon": 12.5783, "type": "cultural"},
-    
-    # Strategic High-Traffic Paths & Low-Competition Areas
-    {"name": "Langelinie Promenade", "lat": 55.6919, "lon": 12.5975, "type": "park"},  # Path to Little Mermaid
-    {"name": "Islands Brygge Havnebadet", "lat": 55.6635, "lon": 12.5805, "type": "park"},  # Harbor bath, outdoor activity
-    {"name": "Superkilen Park", "lat": 55.7006, "lon": 12.5419, "type": "park"},  # Trendy Nørrebro park, less cafes
-    {"name": "Assistens Cemetery", "lat": 55.6907, "lon": 12.5526, "type": "park"},  # Popular walking area
-    {"name": "Reffen Street Food", "lat": 55.6882, "lon": 12.6032, "type": "shopping"},  # Street food market area
-    {"name": "Carlsberg City", "lat": 55.6665, "lon": 12.5397, "type": "neighborhood"},  # New development, less competition
-    {"name": "Trianglen", "lat": 55.7007, "lon": 12.5762, "type": "transport"},  # Transport hub, Østerbro connector
-    {"name": "Langebro Bridge", "lat": 55.6685, "lon": 12.5738, "type": "neighborhood"},  # Connects islands, foot traffic
-    {"name": "Nørrebro Park", "lat": 55.6952, "lon": 12.5509, "type": "park"},  # Large green space, few cafes
-    {"name": "Amager Strand Metro", "lat": 55.6578, "lon": 12.6181, "type": "transport"},  # Beach access point
-]
-
 @app.get("/")
 async def read_root():
     # Serve index.html if it exists (Production)
@@ -98,37 +39,49 @@ async def read_root():
         return FileResponse(f"{static_dir}/index.html")
     return {"message": "NomNom Lite API", "status": "running"}
 
+@app.get("/api/cities")
+def get_cities():
+    """Get list of supported cities"""
+    return CITIES
+
 @app.get("/api/weather")
-def weather():
-    """Get current weather data for Copenhagen"""
+def weather(city_id: str = DEFAULT_CITY_ID):
+    """Get current weather data for a specific city"""
+    # TODO: Update weather service to accept city_id (currently hardcoded to Copenhagen)
+    # For now, we'll just return Copenhagen weather as a placeholder for Ghent if needed,
+    # or ideally update the weather service.
     return get_weather()
 
 @app.get("/api/cafes")
-def cafes():
-    """Get cafe locations in Copenhagen"""
-    return get_cafes()
+def cafes(city_id: str = DEFAULT_CITY_ID):
+    """Get cafe locations in a specific city"""
+    return get_cafes(city_id)
 
 @app.get("/api/hotspots")
-def hotspots():
-    """Get all hotspots with default traffic levels"""
+def hotspots(city_id: str = DEFAULT_CITY_ID):
+    """Get all hotspots with default traffic levels for a city"""
+    city_hotspots = get_hotspots(city_id)
     result = []
-    for spot in COPENHAGEN_HOTSPOTS:
+    for spot in city_hotspots:
         spot_copy = spot.copy()
         spot_copy["traffic_level"] = estimate_traffic(spot["name"], spot["type"])
         result.append(spot_copy)
     return result
 
 @app.get("/api/popular-times/{place_name}")
-def popular_times(place_name: str):
+def popular_times(place_name: str, city_id: str = DEFAULT_CITY_ID):
     """Get Popular Times data for a specific place"""
-    return get_popular_times(place_name, "Copenhagen")
+    city_name = CITIES.get(city_id, {}).get("name", "Copenhagen")
+    return get_popular_times(place_name, city_name)
 
 @app.get("/api/hotspots-live")
-def hotspots_live():
+def hotspots_live(city_id: str = DEFAULT_CITY_ID):
     """Get hotspots with LIVE busyness data from Google Maps (slow)"""
+    city_hotspots = get_hotspots(city_id)
+    city_name = CITIES.get(city_id, {}).get("name", "Copenhagen")
     result = []
-    for spot in COPENHAGEN_HOTSPOTS:
-        popular_data = get_popular_times(spot["name"], "Copenhagen")
+    for spot in city_hotspots:
+        popular_data = get_popular_times(spot["name"], city_name)
         spot_copy = spot.copy()
         spot_copy["traffic_level"] = popular_data.get("current_popularity", 50)
         spot_copy["data_available"] = popular_data.get("data_available", False)
@@ -136,12 +89,14 @@ def hotspots_live():
     return result
 
 @app.get("/api/events")
-def events():
-    """Get active events in Copenhagen (cached daily)"""
+def events(city_id: str = DEFAULT_CITY_ID):
+    """Get active events in a city (cached daily)"""
+    # TODO: Update event service to support multiple cities
     return get_active_events()
 
 @app.get("/api/hotspots-scored")
 def hotspots_scored(
+    city_id: str = DEFAULT_CITY_ID,
     min_traffic: Optional[int] = Query(0, ge=0, le=100),
     max_competition_distance: Optional[int] = Query(1000, ge=0, le=5000),
     require_suitable_weather: Optional[bool] = Query(False),
@@ -150,28 +105,25 @@ def hotspots_scored(
 ):
     """
     Get hotspots with business scores and filtering options.
-    
-    Args:
-        min_traffic: Minimum traffic level (0-100)
-        max_competition_distance: Maximum acceptable distance to nearest cafe (meters)
-        require_suitable_weather: Only show spots with suitable weather
-        use_live_data: Use live Popular Times data (slow)
     """
     # Get weather data
-    weather_data = get_weather()
+    weather_data = get_weather() # TODO: Pass city_id
     weather_suitable = weather_data.get("is_suitable", True)
     
     # Get cafe data for competition analysis
-    cafes_data = get_cafes()
+    cafes_data = get_cafes(city_id)
     
     # Get active events
-    active_events = get_active_events()
+    active_events = get_active_events() # TODO: Pass city_id
+    
+    city_hotspots = get_hotspots(city_id)
+    city_name = CITIES.get(city_id, {}).get("name", "Copenhagen")
     
     result = []
-    for spot in COPENHAGEN_HOTSPOTS:
+    for spot in city_hotspots:
         # Get traffic level
         if use_live_data:
-            popular_data = get_popular_times(spot["name"], "Copenhagen")
+            popular_data = get_popular_times(spot["name"], city_name)
             traffic_level = popular_data.get("current_popularity", 50)
             data_available = popular_data.get("data_available", False)
         else:
@@ -194,6 +146,8 @@ def hotspots_scored(
             return R * c
 
         for event in active_events:
+            # Simple distance check - assumes events are in the same city for now
+            # TODO: Filter events by city first
             dist = calculate_distance(spot["lat"], spot["lon"], event["lat"], event["lon"])
             if dist <= event["impact_radius"]:
                 nearby_events.append({
@@ -237,7 +191,7 @@ def hotspots_scored(
         spot_result.update(score_data)
         
         # Add permit info
-        permit_info = get_permit_status(spot["name"])
+        permit_info = get_permit_status(spot["name"], city_id)
         spot_result["permit_status"] = permit_info["status"]
         spot_result["permit_label"] = permit_info["label"]
         spot_result["permit_color"] = permit_info["color"]
@@ -334,6 +288,7 @@ def estimate_traffic(name: str, spot_type: str, simulated_hour: Optional[int] = 
 
 @app.get("/api/activity-zones")
 def activity_zones(
+    city_id: str = DEFAULT_CITY_ID,
     min_traffic: Optional[int] = Query(0, ge=0, le=100),
     max_competition_distance: Optional[int] = Query(5000, ge=0, le=5000),
     require_suitable_weather: Optional[bool] = Query(False),
@@ -344,17 +299,20 @@ def activity_zones(
     Much faster than individual hotspot scoring.
     """
     # Get scored hotspots (reuse existing logic)
-    weather_data = get_weather()
+    weather_data = get_weather() # TODO: Pass city_id
     weather_suitable = weather_data.get("is_suitable", True)
-    cafes_data = get_cafes()
+    cafes_data = get_cafes(city_id)
     
     if require_suitable_weather and not weather_suitable:
         return []
     
+    city_hotspots = get_hotspots(city_id)
+    city_name = CITIES.get(city_id, {}).get("name", "Copenhagen")
+    
     hotspots_scored = []
-    for spot in COPENHAGEN_HOTSPOTS:
+    for spot in city_hotspots:
         if use_live_data:
-            popular_data = get_popular_times(spot["name"], "Copenhagen")
+            popular_data = get_popular_times(spot["name"], city_name)
             traffic_level = popular_data.get("current_popularity", 50)
         else:
             traffic_level = estimate_traffic(spot["name"], spot["type"])
@@ -382,17 +340,18 @@ def activity_zones(
     return zones
 
 @app.get("/api/permit-info")
-def get_permit_info():
-    """Get Copenhagen permit regulations and information"""
-    return PERMIT_REGULATIONS
+def get_permit_info(city_id: str = DEFAULT_CITY_ID):
+    """Get permit regulations and information for a city"""
+    return PERMIT_REGULATIONS.get(city_id, PERMIT_REGULATIONS[DEFAULT_CITY_ID])
 
 @app.get("/api/hotspots-with-permits")
-def hotspots_with_permits():
+def hotspots_with_permits(city_id: str = DEFAULT_CITY_ID):
     """Get all hotspots with permit status included"""
+    city_hotspots = get_hotspots(city_id)
     result = []
-    for spot in COPENHAGEN_HOTSPOTS:
+    for spot in city_hotspots:
         spot_copy = spot.copy()
-        permit_info = get_permit_status(spot["name"])
+        permit_info = get_permit_status(spot["name"], city_id)
         spot_copy["permit_status"] = permit_info["status"]
         spot_copy["permit_label"] = permit_info["label"]
         spot_copy["permit_color"] = permit_info["color"]

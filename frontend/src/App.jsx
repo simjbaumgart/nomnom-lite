@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -13,8 +13,19 @@ L.Icon.Default.mergeOptions({
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://127.0.0.1:8000');
 
+// Component to handle map flyTo animations
+function MapController({ center, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, zoom, { duration: 1.5 });
+  }, [center, zoom, map]);
+  return null;
+}
+
 function App() {
   const mapRef = useRef(null);
+  const [cities, setCities] = useState({});
+  const [currentCityId, setCurrentCityId] = useState('copenhagen');
   const [weather, setWeather] = useState(null);
   const [cafes, setCafes] = useState([]);
   const [hotspots, setHotspots] = useState([]);
@@ -41,29 +52,45 @@ function App() {
   const [simulatedHour, setSimulatedHour] = useState(new Date().getHours());
 
   useEffect(() => {
-    fetchInitialData();
-    fetchPermitInfo();
+    fetchCities();
   }, []);
 
-  const fetchInitialData = async () => {
+  useEffect(() => {
+    if (currentCityId) {
+      fetchInitialData(currentCityId);
+      fetchPermitInfo(currentCityId);
+    }
+  }, [currentCityId]);
+
+  const fetchCities = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/cities`);
+      const data = await res.json();
+      setCities(data);
+    } catch (err) {
+      console.error('Failed to fetch cities:', err);
+    }
+  };
+
+  const fetchInitialData = async (cityId) => {
     try {
       setLoading(true);
 
       // Fetch weather
-      const weatherRes = await fetch(`${API_BASE_URL}/api/weather`);
+      const weatherRes = await fetch(`${API_BASE_URL}/api/weather?city_id=${cityId}`);
       const weatherData = await weatherRes.json();
       setWeather(weatherData);
 
       // Fetch cafes
-      const cafesRes = await fetch(`${API_BASE_URL}/api/cafes`);
+      const cafesRes = await fetch(`${API_BASE_URL}/api/cafes?city_id=${cityId}`);
       const cafesData = await cafesRes.json();
       setCafes(cafesData);
 
       // Fetch scored hotspots and zones
-      await fetchScoredData();
+      await fetchScoredData(cityId);
 
       // Fetch events
-      const eventsRes = await fetch(`${API_BASE_URL}/api/events`);
+      const eventsRes = await fetch(`${API_BASE_URL}/api/events?city_id=${cityId}`);
       const eventsData = await eventsRes.json();
       setEvents(eventsData);
 
@@ -75,9 +102,9 @@ function App() {
   };
 
 
-  const fetchPermitInfo = async () => {
+  const fetchPermitInfo = async (cityId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/permit-info`);
+      const res = await fetch(`${API_BASE_URL}/api/permit-info?city_id=${cityId}`);
       const data = await res.json();
       setPermitInfo(data);
     } catch (err) {
@@ -85,11 +112,12 @@ function App() {
     }
   };
 
-  const fetchScoredData = async () => {
+  const fetchScoredData = async (cityId = currentCityId) => {
     try {
       setLoadingScored(true);
 
       const params = new URLSearchParams({
+        city_id: cityId,
         min_traffic: minTraffic,
         max_competition_distance: maxCompetition,
         require_suitable_weather: requireSuitableWeather,
@@ -124,8 +152,14 @@ function App() {
     }
   };
 
-  // Copenhagen coordinates
-  const position = [55.6761, 12.5683];
+  // Get current city config
+  const currentCity = cities[currentCityId] || {
+    name: 'Copenhagen',
+    coords: { lat: 55.6761, lon: 12.5683 },
+    default_zoom: 13
+  };
+
+  const position = [currentCity.coords.lat, currentCity.coords.lon];
 
   // Custom icon for hotspots
   const hotspotIcon = new L.divIcon({
@@ -162,7 +196,21 @@ function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>☕ NomNom Lite</h1>
+        <div className="header-content">
+          <h1>☕ NomNom Lite</h1>
+          <div className="city-selector">
+            <select
+              value={currentCityId}
+              onChange={(e) => setCurrentCityId(e.target.value)}
+              className="city-select"
+            >
+              {Object.entries(cities).map(([id, city]) => (
+                <option key={id} value={id}>{city.name}</option>
+              ))}
+            </select>
+          </div>
+          <p className="app-description">Find the best spots for your coffee cart in {currentCity.name}. Analyze foot traffic, events, and competitor density to maximize sales.</p>
+        </div>
         <div className="weather-info">
           {weather && !weather.error && (
             <>
@@ -399,16 +447,17 @@ function App() {
 
       <div className={`map-container ${showTop15 ? 'with-sidebar' : ''}`}>
         {loading ? (
-          <div className="loading">Loading Copenhagen map data...</div>
+          <div className="loading">Loading {currentCity.name} map data...</div>
         ) : error ? (
           <div className="error">Error: {error}</div>
         ) : (
           <MapContainer
             center={position}
-            zoom={13}
+            zoom={currentCity.default_zoom}
             style={{ height: '100%', width: '100%' }}
             ref={mapRef}
           >
+            <MapController center={position} zoom={currentCity.default_zoom} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -523,6 +572,13 @@ function App() {
                     <div className="popup-details">
                       <div>📍 Impact Radius: {event.impact_radius}m</div>
                       <div>📈 Traffic Boost: +{event.traffic_boost}%</div>
+                      {event.url && (
+                        <div style={{ marginTop: '8px' }}>
+                          <a href={event.url} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'none', fontWeight: 'bold' }}>
+                            🔗 More Info
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Popup>
@@ -548,7 +604,7 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowPermitInfo(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>📜 Copenhagen Street Trading Permits</h2>
+              <h2>📜 {permitInfo.title || 'Street Trading Permits'}</h2>
               <button className="close-btn" onClick={() => setShowPermitInfo(false)}>✕</button>
             </div>
             <div className="modal-body">
@@ -588,7 +644,7 @@ function App() {
             </div>
             <div className="modal-footer">
               <p className="disclaimer"><small>{permitInfo.disclaimer}</small></p>
-              <p><a href={permitInfo.application_url} target="_blank" rel="noopener noreferrer">Source: City of Copenhagen</a></p>
+              <p><a href={permitInfo.application_url} target="_blank" rel="noopener noreferrer">Source: City Authority</a></p>
             </div>
           </div>
         </div>
@@ -627,6 +683,11 @@ function App() {
                         <span className="event-type">{event.type.toUpperCase()}</span>
                         <span>📍 Impact: {event.impact_radius}m</span>
                         <span>📈 Traffic: +{event.traffic_boost}%</span>
+                        {event.url && (
+                          <a href={event.url} target="_blank" rel="noopener noreferrer" className="event-link" style={{ marginLeft: '10px', color: '#007bff', textDecoration: 'none' }}>
+                            🔗 More Info
+                          </a>
+                        )}
                       </div>
                       <button className="view-map-btn" onClick={() => {
                         flyToSpot(event.lat, event.lon);
