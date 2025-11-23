@@ -22,6 +22,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Request Logging Middleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+import time
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("nomnom_api")
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        start_time = time.time()
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        
+        # Log format: METHOD PATH STATUS_CODE DURATION_MS
+        logger.info(
+            f"{request.method} {request.url.path} "
+            f"{response.status_code} {process_time:.4f}s"
+        )
+        return response
+
+app.add_middleware(RequestLoggingMiddleware)
+
 # Serve Static Files (Frontend)
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
