@@ -28,7 +28,10 @@ from fastapi.responses import FileResponse
 import os
 
 # Mount static files if directory exists (it will after build)
-static_dir = "static"
+# Mount static files if directory exists (it will after build)
+# Use absolute path relative to this file to ensure it works regardless of CWD
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+static_dir = os.path.join(BASE_DIR, "static")
 if os.path.exists(static_dir):
     app.mount("/assets", StaticFiles(directory=f"{static_dir}/assets"), name="assets")
 
